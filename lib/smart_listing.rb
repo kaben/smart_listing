@@ -31,6 +31,8 @@ module SmartListing
         :sort_attributes                => :implicit,                   # allow implicitly setting sort attributes
         :default_sort                   => {},                          # default sorting
         :href                           => nil,                         # set SmartListing target url (in case when different than current url)
+        href_controller: nil,
+        href_action: nil,
         :remote                         => true,                        # SmartListing is remote by default
         :callback_href                  => nil,                         # set SmartListing callback url (in case when different than current url)
       }.merge(SmartListing.config.global_options).merge(options)
@@ -127,6 +129,14 @@ module SmartListing
 
     def href
       @options[:href]
+    end
+
+    def href_controller
+      @options[:href_controller]
+    end
+
+    def href_action
+      @options[:href_action]
     end
 
     def callback_href

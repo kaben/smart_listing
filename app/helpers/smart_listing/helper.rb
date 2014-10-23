@@ -32,9 +32,24 @@ module SmartListing
         @smart_listing_name
       end
 
+      def get_url_for p
+        c = @smart_listing.try(:href_controller)
+        a = @smart_listing.try(:href_action)
+        p[:controller] = c if c
+        p[:action] = a if a
+        @template.url_for(p)
+      end
+
       def paginate options = {}
+        p = {}
+        c = @smart_listing.try(:href_controller)
+        a = @smart_listing.try(:href_action)
+        p[:controller] = c if c
+        p[:action] = a if a
+        sanitized = sanitize_params p
         if @smart_listing.collection.respond_to? :current_page
-          @template.paginate @smart_listing.collection, {:remote => @smart_listing.remote?, :param_name => @smart_listing.param_name(:page), :params => UNSAFE_PARAMS}.merge(@smart_listing.kaminari_options)
+          #@template.paginate @smart_listing.collection, {:remote => @smart_listing.remote?, :param_name => @smart_listing.param_name(:page), :params => UNSAFE_PARAMS}.merge(@smart_listing.kaminari_options)
+          @template.paginate @smart_listing.collection, {:remote => @smart_listing.remote?, :param_name => @smart_listing.param_name(:page), :params => sanitized}.merge(@smart_listing.kaminari_options)
         end
       end
 
@@ -64,7 +79,8 @@ module SmartListing
 
       def pagination_per_page_link page
         if @smart_listing.per_page.to_i != page
-          url = @template.url_for(sanitize_params(@template.params.merge(@smart_listing.all_params(:per_page => page, :page => 1))))
+          #url = @template.url_for(sanitize_params(@template.params.merge(@smart_listing.all_params(:per_page => page, :page => 1))))
+          url = get_url_for(sanitize_params(@template.params.merge(@smart_listing.all_params(:per_page => page, :page => 1))))
         end
 
         locals = {
@@ -84,13 +100,23 @@ module SmartListing
           attribute => dirs[next_index]
         }
 
+        #puts "@template: #{@template}"
+        #puts "@template.params: #{@template.params}"
+        #puts "@smart_listing.try(:href): #{@smart_listing.try(:href)}"
+        #puts "@smart_listing.try(:href_controller): #{@smart_listing.try(:href_controller)}"
+        #puts "@smart_listing.try(:href_action): #{@smart_listing.try(:href_action)}"
+        #puts "@smart_listing.all_params: #{@smart_listing.all_params}"
+        #merged = @template.params.merge(@smart_listing.all_params(:sort => sort_params))
+        #puts "merged: #{merged}"
         locals = {
           :order => @smart_listing.sort_order(attribute),
-          :url => @template.url_for(sanitize_params(@template.params.merge(@smart_listing.all_params(:sort => sort_params)))),
+          #:url => @template.url_for(sanitize_params(@template.params.merge(@smart_listing.all_params(:sort => sort_params)))),
+          :url => get_url_for(sanitize_params(@template.params.merge(@smart_listing.all_params(:sort => sort_params)))),
           :container_classes => [SmartListing.config.classes(:sortable)],
           :attribute => attribute,
           :title => title
         }
+        #puts "locals: #{locals}"
 
         @template.render(:partial => 'smart_listing/sortable', :locals => default_locals.merge(locals))
       end
