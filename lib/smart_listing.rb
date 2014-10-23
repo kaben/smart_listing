@@ -56,7 +56,7 @@ module SmartListing
 
       set_param(:per_page, @per_page, cookies) if @options[:memorize_per_page]
 
-      @count = @collection.size
+      @count = @collection.try(:size) || @collection.try(:total)
       @count = @count.length if @count.is_a?(Hash)
 
       # Reset @page if greater than total number of pages
@@ -98,11 +98,17 @@ module SmartListing
           end
         end
       else
-        # let's sort by all attributes
-        @collection = @collection.order(sort_keys.collect{|s| "#{s[1]} #{@sort[s[0]]}" if @sort[s[0]]}.compact) if @sort && @sort.any?
+        if @collection.is_a? Sunspot::Search::StandardSearch
+          @collection = @collection.results
+          @per_page = @collection.per_page
+          @page = @collection.current_page
+        else
+          # let's sort by all attributes
+          @collection = @collection.order(sort_keys.collect{|s| "#{s[1]} #{@sort[s[0]]}" if @sort[s[0]]}.compact) if @sort && @sort.any?
 
-        if @options[:paginate] && @per_page > 0
-          @collection = @collection.page(@page).per(@per_page)
+          if @options[:paginate] && @per_page > 0
+            @collection = @collection.page(@page).per(@per_page)
+          end
         end
       end
     end
